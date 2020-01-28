@@ -53,19 +53,33 @@ let app = new Vue({
             mutant_insert_position = utg['insert_start_position'];
 
         let edges = preprocessed;
+        console.log(mutant_insert_count, mutant_insert_position)
         // insert null into seed edges for corresponding mutant edges
         for (let index = 1; index <= edges['[s]'].length; index++) {
+            if (mutant_insert_position === 0) {
+                for (let _ = 0; _ < mutant_insert_count; _++) {
+                    edges['[s]'].splice(0, 0, null);
+                }
+                break;
+            }
+            if (index === edges['[s]'].length) {
+                for (let _ = 0; _ < mutant_insert_count; _++) {
+                    edges['[s]'].splice(index, 0, null);
+                }
+                break;
+            }
+            console.log(edges['[s]'][index][0]-1, edges['[s]'][index-1][0]-1)
             if (
-                index === edges['[s]'].length
-                || (
                     edges['[s]'][index][0] > mutant_insert_position
                     && edges['[s]'][index - 1][0] <= mutant_insert_position
-                )) {
-                for (let _ = 0; _ < mutant_insert_count; _++)
+                ) {
+                for (let _ = 0; _ < mutant_insert_count; _++) {
                     edges['[s]'].splice(index, 0, null);
+                }
                 break;
             }
         }
+        console.log(edges['[s]'])
 
         console.assert(preprocessed['[s]'].length === mutant_length);
 
@@ -83,8 +97,16 @@ let app = new Vue({
 
             let first = i === 0;
             if (first) {
-                prev[0][0] = '';
-                prev[0][1] = this.img(state_of_edge(seed_edge, false));
+                // if first event in seed is inserted,
+                // we still want align the initial state
+                // find the real first state and place the first state at first line
+                for (let seed_find_anchor = 0; seed_find_anchor < seed_dynamic_edges.length; seed_find_anchor++) {
+                    if (seed_dynamic_edges[seed_find_anchor][0] !== null) {
+                        prev[0][0] = '';
+                        prev[0][1] = this.img(state_of_edge(seed_dynamic_edges[seed_find_anchor][0], false));
+                        break;
+                    }
+                }
                 prev[0][2] = '';
                 prev[0][3] = this.img(state_of_edge(dynamic_edge, false));
             }
@@ -98,7 +120,7 @@ let app = new Vue({
             if (seed_edge !== null) {
                 if (!seed_is_delta && seed_edge[0] === delta_seed_from_state + 1) {
                     for (let j = i; j >= 0; j--) {
-                        if (j >= 0 && seed_dynamic_edges[j][0] === null) continue;
+                        if (j >= 0 && prev[j][1] === "") continue;
                         prev[j][4]['seed-delta'] = true;
                         break;
                     }
